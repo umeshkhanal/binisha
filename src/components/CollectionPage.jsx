@@ -677,7 +677,7 @@ export default function CollectionPage() {
       {/* Floating cart — fixed at top-20, always visible on scroll */}
       <button
         onClick={() => setCartOpen(true)}
-        className="fixed right-4 top-20 z-40 inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] transition hover:-translate-y-0.5 sm:right-6 sm:px-4 sm:py-2.5 sm:text-[11px] lg:right-8"
+        className="fixed right-4 md:top-24 top-32 z-40 inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] transition hover:-translate-y-0.5 sm:right-6 sm:px-4 sm:py-2.5 sm:text-[11px] lg:right-8"
         style={{
           boxShadow:
             "0 14px 30px -12px rgba(17,17,17,0.35), 0 0 0 1px rgba(17,17,17,0.06)",
@@ -697,7 +697,7 @@ export default function CollectionPage() {
       </button>
 
       {/* Header + grid OR detail */}
-      <div className="relative mx-auto w-full max-w-7xl px-4 pt-24 sm:px-6 lg:px-8">
+      <div className="relative mx-auto w-full max-w-7xl px-4 md:pt-24 pt-32 sm:px-6 lg:px-8">
         <AnimatePresence mode="wait">
           {!selected ? (
             <motion.div
