@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@import "@fontsource/cairo";
+
+.font-cairo {
+  font-family: "Cairo";
+}
+
+@keyframes floatGlow {
+  0% {
+    transform: translate(-20%, -10%);
+  }
+  50% {
+    transform: translate(120%, 10%);
+  }
+  100% {
+    transform: translate(-20%, -10%);
+  }
+}
+
+.animate-floatGlow {
+  animation: floatGlow 12s ease-in-out infinite;
+}
+
+@keyframes lineMove {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.animate-lineMove {
+  animation: lineMove 2.5s linear infinite;
+}
+
+@keyframes aboutSpinner {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-aboutSpinner {
+  animation: aboutSpinner 8s linear infinite;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
