@@ -26,7 +26,7 @@ const WHATSAPP_NUMBER = "9779819123106";
  */
 const SOCIAL = {
   instagram: "https://www.instagram.com/binisha_miscellany",
-  tiktok: "https://www.tiktok.com/@binisha_miscellany",
+  tiktok: "https://www.tiktok.com/@binisaadhikari",
 };
 
 /* ------------------------------------------------------------------ */
