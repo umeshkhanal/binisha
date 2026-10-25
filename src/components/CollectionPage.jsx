@@ -26,7 +26,7 @@ const WA_BORDER = "rgba(37,211,102,0.45)";
 const EASE = [0.22, 1, 0.36, 1];
 const HEAD_FONT = '"Helvetica Neue", "Arial Black", system-ui, sans-serif';
 
-const WHATSAPP_NUMBER = "9771553531996";
+const WHATSAPP_NUMBER = "9779819123106";
 const CART_KEY = "bm_cart_v2";
 
 /* ------------------------------------------------------------------ */

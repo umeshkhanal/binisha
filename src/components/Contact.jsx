@@ -15,9 +15,9 @@ import {
 /* ================================================================== */
 /*
  * WhatsApp number (country code + number, no +, no spaces).
- * Nepal example: 9771553531996 → keep this format.
+ * Nepal example: 9779819123106 → keep this format.
  */
-const WHATSAPP_NUMBER = "9771553531996";
+const WHATSAPP_NUMBER = "9779819123106";
 
 /*
  * Instagram and TikTok profile URLs.
