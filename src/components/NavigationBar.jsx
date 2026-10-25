@@ -58,24 +58,58 @@ export default function NavBar() {
       setActive("");
       return;
     }
+
     setActive("home");
 
     const ids = SECTIONS.map((s) => s.id);
+
     const handleScroll = () => {
+      const scrollPosition = window.scrollY + window.innerHeight;
+      const pageHeight = document.documentElement.scrollHeight;
+
+      // Keep Contact active through the footer
+      if (scrollPosition >= pageHeight - 10) {
+        setActive("contact");
+        return;
+      }
+
       const mid = window.innerHeight / 2.5;
       let current = "home";
+
       ids.forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
+
         const r = el.getBoundingClientRect();
-        if (r.top <= mid && r.bottom >= mid) current = id;
+
+        if (r.top <= mid && r.bottom >= mid) {
+          current = id;
+        }
       });
+
+      // Keep Contact active when scrolling through the footer
+      const footer = document.querySelector("footer");
+
+      if (footer) {
+        const footerTop = footer.getBoundingClientRect().top;
+
+        if (footerTop <= window.innerHeight) {
+          current = "contact";
+        }
+      }
+
       setActive(current);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, [location.pathname, onHome]);
 
   return (
