@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { assets } from "../assets/assets";
-import { Link } from "react-scroll";
+import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 
 /* Palette */
@@ -230,10 +230,7 @@ export default function Home() {
           </h1>
 
           <Link
-            to="collection"
-            smooth
-            duration={700}
-            offset={-24}
+            to="/collection"
             className="group mt-9 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-7 py-4 text-[11px] font-bold uppercase tracking-[0.16em] transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] sm:px-8 sm:text-xs sm:tracking-[0.22em]"
             style={{
               backgroundColor: PINK,
