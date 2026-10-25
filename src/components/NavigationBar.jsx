@@ -153,7 +153,7 @@ export default function NavBar() {
           )}
           <span className="flex min-w-0 flex-col leading-none">
             <span
-              className="truncate text-sm font-extrabold uppercase sm:text-base"
+              className="truncate text-xs font-bold sm:font-extrabold uppercase sm:text-base"
               style={{ letterSpacing: "0.04em", color: BLACK }}
             >
               Binisha Miscellany
