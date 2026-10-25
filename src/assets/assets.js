@@ -7,12 +7,12 @@ import j2 from "./journey/2.jpg";
 import j3 from "./journey/3.jpg";
 
 //fashion
-import fashionP1 from "./portfolio/fashion/p1.jpg";
-import fashionP2 from "./portfolio/fashion/p2.jpg";
-import fashionP3 from "./portfolio/fashion/p3.jpg";
-import fashionP4 from "./portfolio/fashion/p4.jpg";
-import fashionP5 from "./portfolio/fashion/p5.jpg";
-import fashionP6 from "./portfolio/fashion/p6.jpg";
+import c1 from "./collection/01.jpg";
+import c2 from "./collection/02.jpg";
+import c3 from "./collection/03.jpg";
+import c4 from "./collection/04.jpg";
+import c5 from "./collection/05.jpg";
+import c6 from "./collection/06.jpg";
 
 export const assets = {
   bg,
@@ -22,10 +22,10 @@ export const assets = {
   j1,
   j2,
   j3,
-  fashionP1,
-  fashionP2,
-  fashionP3,
-  fashionP4,
-  fashionP5,
-  fashionP6,
+  c1,
+  c2,
+  c3,
+  c4,
+  c5,
+  c6,
 };
