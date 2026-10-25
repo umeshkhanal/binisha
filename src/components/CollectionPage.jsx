@@ -9,8 +9,9 @@ import {
   ShoppingBag,
   MessageCircle,
   Home as HomeIcon,
+  Check,
 } from "lucide-react";
-import { PRODUCTS, CATEGORY_LABELS } from "./product";
+import { PRODUCTS, CATEGORY_LABELS, CATEGORY_ORDER } from "./product";
 
 /* ------------------------------------------------------------------ */
 /* Tokens                                                              */
@@ -19,21 +20,35 @@ const PINK = "#FF4FA3";
 const BLACK = "#111111";
 const WHITE = "#FFFFFF";
 const BLUSH = "#FFF0F7";
+const WA_GREEN = "#25D366";
+const WA_TINT = "rgba(37,211,102,0.06)";
+const WA_BORDER = "rgba(37,211,102,0.45)";
 const EASE = [0.22, 1, 0.36, 1];
 const HEAD_FONT = '"Helvetica Neue", "Arial Black", system-ui, sans-serif';
 
 const WHATSAPP_NUMBER = "9771553531996";
-const CURRENCY = "NPR";
 const CART_KEY = "bm_cart_v2";
 
-const photoFilter = { filter: "saturate(1.02) contrast(1.02)" };
+/* ------------------------------------------------------------------ */
+/* WhatsApp helpers                                                    */
+/* ------------------------------------------------------------------ */
+const waLink = (message) =>
+  `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
-const money = (n) =>
-  n == null
-    ? null
-    : `${CURRENCY} ${new Intl.NumberFormat("en-IN", {
-        maximumFractionDigits: 0,
-      }).format(n)}`;
+const openWhatsApp = (message) =>
+  window.open(waLink(message), "_blank", "noopener,noreferrer");
+
+const itemLine = (name, qty = 1) => `• ${name}${qty > 1 ? ` × ${qty}` : ""}`;
+
+const singleOrderMessage = (product, qty = 1) =>
+  `Hi Binisha Miscellany! I'd like to order:\n\n` +
+  itemLine(product.name, qty) +
+  `\n\nMy name: \nMy delivery address: `;
+
+const cartOrderMessage = (items) =>
+  `Hi Binisha Miscellany! I'd like to place an order:\n\n` +
+  items.map((it) => itemLine(it.name, it.qty)).join("\n") +
+  `\n\nMy name: \nMy delivery address: `;
 
 /* ------------------------------------------------------------------ */
 /* Image with skeleton                                                 */
@@ -75,35 +90,46 @@ function Img({ src, alt, className = "", eager = false }) {
         animate={{ opacity: loaded ? 1 : 0 }}
         transition={{ duration: 0.5, ease: EASE }}
         className={`h-full w-full object-cover ${className}`}
-        style={photoFilter}
       />
     </>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Compact tile for the catalogue                                      */
+/* Product tile — two inline buttons (add + WhatsApp)                  */
 /* ------------------------------------------------------------------ */
-function ProductTile({ product, onClick, d = 0 }) {
+function ProductTile({
+  product,
+  onOpen,
+  onQuickAdd,
+  onWhatsApp,
+  added,
+  d = 0,
+}) {
   const unavailable = product.inStock === false;
+
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
+    <motion.div
       initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.5, ease: EASE, delay: d }}
-      className="group flex flex-col rounded-lg border bg-white text-left transition hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-xl border bg-white transition-shadow duration-300 hover:shadow-lg"
       style={{ borderColor: "rgba(17,17,17,0.08)" }}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-t-lg bg-neutral-100">
-        <div className="h-full w-full transition-transform duration-700 group-hover:scale-[1.03]">
+      <button
+        type="button"
+        onClick={() => onOpen(product)}
+        className="relative block aspect-square w-full overflow-hidden bg-neutral-100"
+        aria-label={`View ${product.name}`}
+      >
+        <div className="h-full w-full transition-transform duration-700 group-hover:scale-[1.04]">
           <Img src={product.images?.[0]} alt={product.name} />
         </div>
+
         {unavailable && (
           <span
-            className="absolute left-1.5 top-1.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase"
+            className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase"
             style={{
               letterSpacing: "0.18em",
               backgroundColor: "rgba(17,17,17,0.85)",
@@ -113,30 +139,78 @@ function ProductTile({ product, onClick, d = 0 }) {
             Unavailable
           </span>
         )}
-      </div>
 
-      <div className="flex flex-1 flex-col px-3 py-2.5">
-        <p
-          className="text-[8px] font-bold uppercase"
-          style={{ letterSpacing: "0.26em", color: PINK }}
-        >
-          {CATEGORY_LABELS[product.category] || product.category}
-        </p>
-        <h3 className="mt-0.5 line-clamp-2 text-xs font-semibold leading-snug sm:text-sm">
-          {product.name}
-        </h3>
-        {money(product.price) && (
-          <p className="mt-1 text-sm font-bold">{money(product.price)}</p>
-        )}
+        <div className="pointer-events-none absolute inset-0 hidden items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/10 sm:flex">
+          <span
+            className="translate-y-2 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold uppercase opacity-0 shadow-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
+            style={{ letterSpacing: "0.2em" }}
+          >
+            View details
+          </span>
+        </div>
+      </button>
+
+      <div className="flex flex-1 flex-col gap-2 px-2.5 pb-2.5 pt-2 sm:px-3 sm:pb-3 sm:pt-2.5">
+        <div>
+          <p
+            className="text-[8px] font-bold uppercase"
+            style={{ letterSpacing: "0.26em", color: PINK }}
+          >
+            {CATEGORY_LABELS[product.category] || product.category}
+          </p>
+          <h3 className="mt-0.5 line-clamp-2 text-xs font-semibold leading-snug sm:text-sm">
+            {product.name}
+          </h3>
+        </div>
+
+        <div className="mt-auto grid grid-cols-2 gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            disabled={unavailable}
+            onClick={() => onQuickAdd(product)}
+            className="inline-flex min-w-0 items-center justify-center gap-1 rounded-full px-2 py-2 text-[9px] font-bold uppercase transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 sm:text-[10px]"
+            style={{
+              letterSpacing: "0.08em",
+              backgroundColor: added ? BLACK : PINK,
+              color: WHITE,
+              boxShadow: added
+                ? "none"
+                : "0 10px 22px -10px rgba(255,79,163,0.6)",
+            }}
+            aria-label={`Add ${product.name} to order`}
+          >
+            {added ? <Check size={12} /> : <ShoppingBag size={12} />}
+            <span className="truncate">
+              {added ? "Added" : "Add"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            disabled={unavailable}
+            onClick={() => onWhatsApp(product)}
+            className="inline-flex min-w-0 items-center justify-center gap-1 rounded-full border px-2 py-2 text-[9px] font-bold uppercase transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 sm:text-[10px]"
+            style={{
+              letterSpacing: "0.08em",
+              borderColor: WA_BORDER,
+              backgroundColor: WA_TINT,
+              color: WA_GREEN,
+            }}
+            aria-label={`Order ${product.name} on WhatsApp`}
+          >
+            <MessageCircle size={12} />
+            <span className="truncate">Chat</span>
+          </button>
+        </div>
       </div>
-    </motion.button>
+    </motion.div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* In-page detail view (replaces the grid when a product is selected)  */
+/* Detail view                                                         */
 /* ------------------------------------------------------------------ */
-function ProductDetail({ product, onBack, onAdd, onBuyNow }) {
+function ProductDetail({ product, onBack, onAdd, onBuyNow, added }) {
   const [activeMedia, setActiveMedia] = useState(0);
   const [qty, setQty] = useState(1);
   const unavailable = product.inStock === false;
@@ -161,8 +235,8 @@ function ProductDetail({ product, onBack, onAdd, onBuyNow }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.35, ease: EASE }}
+      className="pb-28 sm:pb-0"
     >
-      {/* Back */}
       <button
         onClick={onBack}
         className="mb-5 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] hover:opacity-70 sm:text-[11px]"
@@ -271,18 +345,9 @@ function ProductDetail({ product, onBack, onAdd, onBuyNow }) {
             {product.name}
           </h1>
 
-          {money(product.price) && (
-            <p
-              className="mt-4 text-3xl font-extrabold"
-              style={{ fontFamily: HEAD_FONT }}
-            >
-              {money(product.price)}
-            </p>
-          )}
-
           {product.description && (
             <p
-              className="mt-5 text-sm leading-relaxed sm:text-base"
+              className="mt-4 text-sm leading-relaxed sm:text-base"
               style={{ opacity: 0.75 }}
             >
               {product.description}
@@ -336,28 +401,35 @@ function ProductDetail({ product, onBack, onAdd, onBuyNow }) {
             </div>
           )}
 
-          <div className="mt-8 flex flex-col gap-2 sm:flex-row">
+          {/* Desktop buttons — hidden on mobile (sticky bar handles it) */}
+          <div className="mt-8 hidden gap-2 sm:flex">
             <button
               disabled={unavailable}
               onClick={() => onAdd(product, qty)}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-full px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.16em] transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
               style={{
-                backgroundColor: PINK,
+                backgroundColor: added ? BLACK : PINK,
                 color: WHITE,
-                boxShadow: "0 14px 30px -12px rgba(255,79,163,0.55)",
+                boxShadow: added
+                  ? "none"
+                  : "0 14px 30px -12px rgba(255,79,163,0.55)",
               }}
             >
-              <ShoppingBag size={16} strokeWidth={2.5} />
-              Add to order
+              {added ? (
+                <Check size={16} strokeWidth={2.5} />
+              ) : (
+                <ShoppingBag size={16} strokeWidth={2.5} />
+              )}
+              {added ? "Added to order" : "Add to order"}
             </button>
             <button
               disabled={unavailable}
               onClick={() => onBuyNow(product, qty)}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.16em] transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
               style={{
-                borderColor: PINK,
-                color: PINK,
-                backgroundColor: "rgba(255,79,163,0.04)",
+                borderColor: WA_BORDER,
+                color: WA_GREEN,
+                backgroundColor: WA_TINT,
               }}
             >
               <MessageCircle size={16} strokeWidth={2.5} />
@@ -374,6 +446,57 @@ function ProductDetail({ product, onBack, onAdd, onBuyNow }) {
           </p>
         </div>
       </div>
+
+      {/* Sticky action bar — mobile only */}
+      {!unavailable && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-30 px-3 pt-2.5 sm:hidden"
+          style={{
+            paddingBottom: "max(0.65rem, env(safe-area-inset-bottom))",
+            background:
+              "linear-gradient(to top, rgba(255,255,255,0.98) 60%, rgba(255,255,255,0.85) 100%)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+            borderTop: "1px solid rgba(17,17,17,0.08)",
+            boxShadow: "0 -12px 30px -18px rgba(17,17,17,0.25)",
+          }}
+        >
+          <div className="flex items-stretch gap-2">
+            <button
+              onClick={() => onBuyNow(product, qty)}
+              className="inline-flex flex-[0.85] items-center justify-center gap-1.5 rounded-full border px-4 py-3 text-[10px] font-bold uppercase transition-all duration-300 active:scale-[0.97]"
+              style={{
+                letterSpacing: "0.16em",
+                borderColor: WA_BORDER,
+                color: WA_GREEN,
+                backgroundColor: WA_TINT,
+              }}
+            >
+              <MessageCircle size={15} strokeWidth={2.5} />
+              Chat
+            </button>
+            <button
+              onClick={() => onAdd(product, qty)}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-3 text-[10px] font-bold uppercase transition-all duration-300 active:scale-[0.97]"
+              style={{
+                letterSpacing: "0.16em",
+                backgroundColor: added ? BLACK : PINK,
+                color: WHITE,
+                boxShadow: added
+                  ? "none"
+                  : "0 12px 26px -12px rgba(255,79,163,0.7)",
+              }}
+            >
+              {added ? (
+                <Check size={15} strokeWidth={2.75} />
+              ) : (
+                <ShoppingBag size={15} strokeWidth={2.5} />
+              )}
+              {added ? "Added" : "Add to order"}
+            </button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -382,11 +505,6 @@ function ProductDetail({ product, onBack, onAdd, onBuyNow }) {
 /* Cart drawer                                                         */
 /* ------------------------------------------------------------------ */
 function CartDrawer({ open, items, onClose, onQty, onRemove, onCheckout }) {
-  const subtotal = items.reduce(
-    (s, it) => s + (it.price == null ? 0 : it.price * it.qty),
-    0,
-  );
-  const anyPrice = items.some((it) => it.price != null);
   const count = items.reduce((s, it) => s + it.qty, 0);
 
   return (
@@ -468,11 +586,6 @@ function CartDrawer({ open, items, onClose, onQty, onRemove, onCheckout }) {
                         <p className="truncate text-sm font-semibold">
                           {it.name}
                         </p>
-                        {it.price != null && (
-                          <p className="mt-0.5 text-xs font-semibold">
-                            {money(it.price)}
-                          </p>
-                        )}
                         <div className="mt-auto flex items-center gap-2 pt-2">
                           <button
                             className="flex h-7 w-7 items-center justify-center rounded-full border hover:bg-neutral-50"
@@ -506,22 +619,14 @@ function CartDrawer({ open, items, onClose, onQty, onRemove, onCheckout }) {
               )}
             </div>
 
-            <div className="border-t px-5 py-4">
-              {anyPrice ? (
-                <div className="flex items-center justify-between text-base">
-                  <span className="font-bold">Total</span>
-                  <span className="font-bold">{money(subtotal)}</span>
-                </div>
-              ) : (
-                <p className="text-xs" style={{ opacity: 0.6 }}>
-                  Prices will appear once added to product data.
-                </p>
-              )}
-
+            <div
+              className="border-t px-5 py-4"
+              style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+            >
               <button
                 disabled={items.length === 0}
                 onClick={onCheckout}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
                 style={{
                   backgroundColor: PINK,
                   color: WHITE,
@@ -536,7 +641,6 @@ function CartDrawer({ open, items, onClose, onQty, onRemove, onCheckout }) {
                 style={{ opacity: 0.55 }}
               >
                 You'll be redirected to WhatsApp with your order ready to send.
-                Payment and delivery will be arranged in the chat.
               </p>
             </div>
           </motion.aside>
@@ -553,6 +657,9 @@ export default function CollectionPage() {
   const reduceMotion = useReducedMotion();
   const [selectedId, setSelectedId] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [activeCat, setActiveCat] = useState("all");
+  const [justAddedId, setJustAddedId] = useState(null);
+
   const [cart, setCart] = useState(() => {
     try {
       const raw = localStorage.getItem(CART_KEY);
@@ -570,39 +677,49 @@ export default function CollectionPage() {
     }
   }, [cart]);
 
+  useEffect(() => {
+    if (!justAddedId) return;
+    const t = setTimeout(() => setJustAddedId(null), 1400);
+    return () => clearTimeout(t);
+  }, [justAddedId]);
+
   const selected = selectedId
     ? PRODUCTS.find((p) => p.id === selectedId)
     : null;
 
   const cartCount = cart.reduce((s, x) => s + x.qty, 0);
-  const cartTotal = cart.reduce(
-    (s, x) => s + (x.price == null ? 0 : x.price * x.qty),
-    0,
-  );
 
-  const addToCart = (product, qty = 1) => {
+  const visibleProducts = useMemo(() => {
+    const list =
+      activeCat === "all"
+        ? PRODUCTS
+        : PRODUCTS.filter((p) => p.category === activeCat);
+    return [...list].sort(
+      (a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0),
+    );
+  }, [activeCat]);
+
+  const addToCart = (product, qty = 1, { open = false } = {}) => {
     setCart((prev) => {
-      const key = product.id;
-      const existing = prev.find((x) => x.key === key);
+      const existing = prev.find((x) => x.key === product.id);
       if (existing) {
         return prev.map((x) =>
-          x.key === key ? { ...x, qty: x.qty + qty } : x,
+          x.key === product.id ? { ...x, qty: x.qty + qty } : x,
         );
       }
       return [
         ...prev,
         {
-          key,
+          key: product.id,
           id: product.id,
           name: product.name,
-          price: product.price,
-          currency: CURRENCY,
           images: product.images,
           qty,
         },
       ];
     });
-    setCartOpen(true);
+    setJustAddedId(product.id);
+    if (open) setCartOpen(true);
   };
 
   const changeQty = (key, delta) =>
@@ -617,38 +734,12 @@ export default function CollectionPage() {
   const removeItem = (key) =>
     setCart((prev) => prev.filter((x) => x.key !== key));
 
-  const sendSingleToWhatsApp = (product, qty) => {
-    const line = `• ${product.name} × ${qty} — ${money(
-      (product.price || 0) * qty,
-    )}`;
-    const message =
-      `Hi Binisha Miscellany! I'd like to order:\n\n` +
-      line +
-      (product.price ? `\n\nTotal: ${money(product.price * qty)}` : "") +
-      `\n\nMy name: \nMy delivery address: `;
-    window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
+  const sendSingleToWhatsApp = (product, qty = 1) =>
+    openWhatsApp(singleOrderMessage(product, qty));
 
   const checkoutCart = () => {
     if (cart.length === 0) return;
-    const lines = cart.map(
-      (it) => `• ${it.name} × ${it.qty} — ${money(it.price * it.qty)}`,
-    );
-    const totalLine = cartTotal > 0 ? `\n\nTotal: ${money(cartTotal)}` : "";
-    const message =
-      `Hi Binisha Miscellany! I'd like to place an order:\n\n` +
-      lines.join("\n") +
-      totalLine +
-      `\n\nMy name: \nMy delivery address: `;
-    window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    openWhatsApp(cartOrderMessage(cart));
   };
 
   const view = reduceMotion
@@ -659,9 +750,11 @@ export default function CollectionPage() {
         viewport: { once: true, margin: "-60px" },
       };
 
+  const categories = ["all", ...CATEGORY_ORDER];
+
   return (
     <main
-      className="relative min-h-screen overflow-x-clip"
+      className="relative min-h-screen overflow-x-clip pb-24"
       style={{ backgroundColor: BLUSH, color: BLACK }}
     >
       {/* Soft pink bloom */}
@@ -674,10 +767,10 @@ export default function CollectionPage() {
         }}
       />
 
-      {/* Floating cart — fixed at top-20, always visible on scroll */}
+      {/* Floating cart pill — pinned below the safe area / header */}
       <button
         onClick={() => setCartOpen(true)}
-        className="fixed right-4 md:top-24 top-32 z-40 inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] transition hover:-translate-y-0.5 sm:right-6 sm:px-4 sm:py-2.5 sm:text-[11px] lg:right-8"
+        className="fixed right-4 top-4 z-40 inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg transition hover:-translate-y-0.5 sm:right-6 sm:px-4 sm:py-2.5 sm:text-[11px] lg:right-8"
         style={{
           boxShadow:
             "0 14px 30px -12px rgba(17,17,17,0.35), 0 0 0 1px rgba(17,17,17,0.06)",
@@ -696,8 +789,12 @@ export default function CollectionPage() {
         )}
       </button>
 
-      {/* Header + grid OR detail */}
-      <div className="relative mx-auto w-full max-w-7xl px-4 md:pt-24 pt-32 sm:px-6 lg:px-8">
+      {/*
+        Content wrapper — the SINGLE place top padding is set.
+        Mobile gets pt-32 so the fixed cart pill doesn't overlap the breadcrumb.
+        sm+ tightens to pt-24.
+      */}
+      <div className="relative mx-auto w-full max-w-5xl px-4 pt-32 sm:px-6 sm:pt-24 lg:px-8">
         <AnimatePresence mode="wait">
           {!selected ? (
             <motion.div
@@ -707,10 +804,10 @@ export default function CollectionPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25, ease: EASE }}
             >
-              {/* Catalogue header */}
-              <header className="pb-5 sm:pb-6">
+              {/* Header */}
+              <header className="pb-6 sm:pb-8">
                 <nav
-                  className="mb-3 flex items-center gap-1.5 text-[9px] font-semibold uppercase"
+                  className="mb-4 flex items-center gap-1.5 text-[9px] font-semibold uppercase"
                   style={{ letterSpacing: "0.22em", opacity: 0.55 }}
                 >
                   <Link
@@ -727,7 +824,7 @@ export default function CollectionPage() {
                   className="font-extrabold uppercase"
                   style={{
                     fontFamily: HEAD_FONT,
-                    fontSize: "clamp(1.6rem, 5vw, 2.6rem)",
+                    fontSize: "clamp(1.7rem, 5vw, 2.8rem)",
                     lineHeight: 0.96,
                     letterSpacing: "-0.03em",
                     margin: 0,
@@ -741,27 +838,67 @@ export default function CollectionPage() {
                   className="mt-3 max-w-xl text-xs leading-relaxed sm:text-sm"
                   style={{ opacity: 0.7 }}
                 >
-                  Tap any piece to see its details. Add to your order and send
-                  it to Binisha Miscellany on WhatsApp — payment and delivery
-                  are arranged in the chat.
+                  Tap any piece to see its details, or add directly to your
+                  order. Send the finished order to Binisha Miscellany on
+                  WhatsApp — payment and delivery are arranged in the chat.
                 </p>
               </header>
 
-              {/* Compact grid */}
-              <section className="pb-32">
+              {/* Category filter bar */}
+              <div className="-mx-4 mb-6 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
+                <div className="flex w-max items-center gap-2 sm:w-auto sm:flex-wrap">
+                  {categories.map((cat) => {
+                    const active = activeCat === cat;
+                    const label =
+                      cat === "all" ? "All" : CATEGORY_LABELS[cat] || cat;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCat(cat)}
+                        className="shrink-0 rounded-full border sm:px-3.5 px-1.5 sm:py-1.5 py-1 sm:text-[10px] text-[9px] font-bold uppercase transition-all duration-300 hover:-translate-y-0.5"
+                        style={{
+                          letterSpacing: "0.18em",
+                          borderColor: active ? PINK : "rgba(17,17,17,0.12)",
+                          backgroundColor: active ? PINK : "transparent",
+                          color: active ? WHITE : BLACK,
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Grid — locked at 2 columns */}
+              <section>
                 <motion.div
                   {...view}
-                  className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4"
+                  className="grid grid-cols-2 gap-3 sm:gap-4"
                 >
-                  {PRODUCTS.map((p, i) => (
+                  {visibleProducts.map((p, i) => (
                     <ProductTile
                       key={p.id}
                       product={p}
-                      onClick={() => setSelectedId(p.id)}
+                      onOpen={(prod) => setSelectedId(prod.id)}
+                      onQuickAdd={(prod) => addToCart(prod, 1)}
+                      onWhatsApp={(prod) =>
+                        openWhatsApp(singleOrderMessage(prod, 1))
+                      }
+                      added={justAddedId === p.id}
                       d={i * 0.04}
                     />
                   ))}
                 </motion.div>
+
+                {visibleProducts.length === 0 && (
+                  <p
+                    className="mt-16 text-center text-sm"
+                    style={{ opacity: 0.55 }}
+                  >
+                    Nothing in this category yet.
+                  </p>
+                )}
               </section>
             </motion.div>
           ) : (
@@ -771,36 +908,37 @@ export default function CollectionPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25, ease: EASE }}
-              className="pb-24"
             >
               <ProductDetail
                 product={selected}
                 onBack={() => setSelectedId(null)}
-                onAdd={addToCart}
+                onAdd={(p, q) => addToCart(p, q, { open: true })}
                 onBuyNow={sendSingleToWhatsApp}
+                added={justAddedId === selected.id}
               />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Floating view-order button on mobile */}
-      {cartCount > 0 && (
+      {/* Mobile floating order pill */}
+      {cartCount > 0 && !cartOpen && (
         <motion.button
           initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 60, opacity: 0 }}
           onClick={() => setCartOpen(true)}
-          className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[10px] font-bold uppercase shadow-2xl md:hidden"
+          className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[10px] font-bold uppercase shadow-2xl sm:hidden"
           style={{
             letterSpacing: "0.18em",
             backgroundColor: PINK,
             color: WHITE,
             boxShadow: "0 20px 40px -18px rgba(255,79,163,0.7)",
+            paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))",
           }}
         >
           <ShoppingBag size={13} />
-          View order · {cartCount} · {money(cartTotal)}
+          View order · {cartCount}
         </motion.button>
       )}
 

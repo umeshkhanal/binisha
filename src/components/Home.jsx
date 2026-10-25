@@ -11,12 +11,12 @@ const WHITE = "#FFFFFF";
 
 /* Images */
 const HERO_IMAGES = [
-  { src: assets.fashionP1, w: 420, h: 560, label: "Look 01" },
-  { src: assets.fashionP2, w: 360, h: 500, label: "Look 02" },
-  { src: assets.fashionP3, w: 460, h: 600, label: "Look 03" },
-  { src: assets.fashionP4, w: 400, h: 540, label: "Look 04" },
-  { src: assets.fashionP5, w: 440, h: 580, label: "Look 05" },
-  { src: assets.fashionP6, w: 380, h: 520, label: "Look 06" },
+  { src: assets.c1, w: 420, h: 560, label: "Look 01" },
+  { src: assets.c2, w: 360, h: 500, label: "Look 02" },
+  { src: assets.c5, w: 440, h: 580, label: "Look 05" },
+  { src: assets.c6, w: 380, h: 520, label: "Look 06" },
+  { src: assets.c3, w: 460, h: 600, label: "Look 03" },
+  { src: assets.c4, w: 400, h: 540, label: "Look 04" },
 ];
 
 /*
