@@ -28,7 +28,7 @@ export default function App() {
     <>
       <ScrollToTop />
       <SEOHandler />
-      {/* <FloatingActions /> */}
+      <FloatingActions />
       <Routes>
         {/* MAIN LANDING */}
         <Route path="/" element={<LandingPage />} />
